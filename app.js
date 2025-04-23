@@ -21,8 +21,9 @@ app.use(express.urlencoded({ extended: false }));
 
 // Routes
 app.use('/api/v1', authRoutes);
-// app.use('api/v1', transactionRoutes);
-// app.use('api/v1', walletRoutes);
+app.use('/api/v1/transactions', transactionRoutes);
+app.use('/api/v1/wallet', walletRoutes);
+
 
 
 app.listen(process.env.PORT || 5000, () => {

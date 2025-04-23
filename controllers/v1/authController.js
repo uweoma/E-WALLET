@@ -25,27 +25,17 @@ const register = async (req, res) => {
             return res.status(400).json({ message: 'Password must be at least 8 characters long' });
         }
 
-        // const existingUser = await User.findOne({ email });
-        // if (existingUser) {
-        //     return res.status(400).json({ message: 'User already exists' });
-        // }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
+        //const hashedPassword = await bcrypt.hash(password, 10); don't hash password here, it will be hashed in the model pre-save hook
         const user = await User.create({
             name,
             email,
-            password: hashedPassword,
+            password
         });
-
-        const token = user.generateAuthToken();
-        
 
         res.status(201).json({
             id: user._id,
             name: user.name,
             email: user.email,
-            token,
-            user: user.toJSON(),
 
             createdAt: user.createdAt,
         });
@@ -75,6 +65,7 @@ const login = async (req, res) => {
 
         //Find user with this email
         const user = await User.findOne({ email }).select('+password');
+        console.log('User found:', user);
         if (!user) {
             return res.status(401).json({ message: 'Invalid email' });
         }
@@ -82,26 +73,20 @@ const login = async (req, res) => {
         console.log('Input password:', password);
         console.log('Stored hash:', user.password);
         
+        
 
         const isMatch = await bcrypt.compare(password, user.password);
+        console.log('Password match:', isMatch);
         if (!isMatch) {
             return res.status(401).json({ message: 'Invalid passworddd' });
         }
 
-        // Generate JWT token
-        //const token = user.generateAuthToken();
-    
-
-
-        // const payload = {
-        //     id: user.id,
-        //     email: user.email,
-        // };
-
-        // Generate JWT token
-
-        // const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
-        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+        const payload = {
+            id: user._id,
+            email: user.email,
+        };
+        // Create JWT token
+        const token = jwt.sign(payload, process.env.JWT_SECRET, {
             expiresIn: '7d',
         });
 
@@ -110,18 +95,10 @@ const login = async (req, res) => {
             token,
             user: {
                 id: user._id,
-                name: user.name,
                 email: user.email,
                 createdAt: user.createdAt,
             },
         });
-
-        // const token = user.getSignedJwtToken();
-    
-        // res.status(200).json({
-        // success: true,
-        // token
-        // });
         return;
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -151,6 +128,10 @@ const getProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
     try {
         const { name, email, password } = req.body;
+        const userId = req.user.id;
+        if (typeof userId !== 'string') {
+            return res.status(400).json({ message: 'User ID must be a string' });
+        }
 
         if (typeof name !== 'string') {
             return res.status(400).json({ message: 'Name must be a string' });
@@ -164,7 +145,7 @@ const updateProfile = async (req, res) => {
             return res.status(400).json({ message: 'Password must be a string' });
         }
 
-        const user = await User.findById(req.user.id);
+        const user = await User.findByIdAndUpdate(req.para.id);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
