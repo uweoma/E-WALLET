@@ -9,7 +9,7 @@ const { ObjectId } = mongoose.Schema.Types;
 
 const walletSchema = new mongoose.Schema({
     userId: { 
-        type: ObjectId, 
+        type: mongoose.Schema.Types.ObjectId,
         ref: "User" 
     },
     balance: { 

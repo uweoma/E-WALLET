@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../../models/User');
+const Wallet = require('../../models/Wallet');
 
 // @desc    Register a new user
 // @route   POST /api/v1/auth/register
@@ -32,10 +33,23 @@ const register = async (req, res) => {
             password
         });
 
+        const wallet = await Wallet.create({
+            userId: user._id,
+            balance: 0,
+        });
+        if (!wallet) {
+            return res.status(500).json({ message: 'Failed to create wallet' });
+        }
+
+        // link wallet to user
+        user.walletId = wallet._id;
+        await user.save();
+
         res.status(201).json({
             id: user._id,
             name: user.name,
             email: user.email,
+            walletId: user.walletId,
 
             createdAt: user.createdAt,
         });
@@ -69,9 +83,6 @@ const login = async (req, res) => {
         if (!user) {
             return res.status(401).json({ message: 'Invalid email' });
         }
-
-        console.log('Input password:', password);
-        console.log('Stored hash:', user.password);
         
         
 
@@ -82,7 +93,7 @@ const login = async (req, res) => {
         }
 
         const payload = {
-            id: user._id,
+            userId: user._id,
             email: user.email,
         };
         // Create JWT token
@@ -94,7 +105,7 @@ const login = async (req, res) => {
         res.status(200).json({
             token,
             user: {
-                id: user._id,
+                userId: user._id,
                 email: user.email,
                 createdAt: user.createdAt,
             },
@@ -114,9 +125,14 @@ const getProfile = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
+
+        const walletId = await Wallet.find({userId: user._id});
+        if (!walletId) {
+            return res.status(404).json({ message: 'Wallet not found' });
+        }
         
 
-        res.status(200).json(user);
+        res.status(200).json(user, walletId);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

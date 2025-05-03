@@ -3,20 +3,32 @@ const auth = require('../../middleware/auth')
 const Transaction = require('../../models/Transaction')
 const { v4: uuidv4 } = require('uuid');
 const User = require('../../models/User');
+const mongoose = require('mongoose');
 
 // @desc    Get wallet balance
 // @route   GET /api/v1/wallet/balance
 // @access  Private
 const getWalletBalance = async (req, res) => {
     try {
-        const userId = req.user.id;
-        const wallet = await Wallet.findOne({ userId });
+        //const userId = req.user.userId
+        const userId = req.params.id;
+        console.log(userId)
+        if (!userId) 
+            return res.status(401).json({ message: "Access Deniedddd" });
+        
+        const objectUserId = new mongoose.Types.ObjectId(userId);
+        //const { userId } = req.params
+        const wallet = await Wallet.findOne({ userId: userId });
+        //const wallet = await Wallet.findOne({ userId: new mongoose.Types.ObjectId(req.user) });
+        console.log(wallet)
+
 
         if (!wallet) {
             return res.status(404).json({ message: 'Wallet not found' });
         }
 
         res.status(200).json({ balance: wallet.balance });
+        console.log(wallet)
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
