@@ -10,17 +10,13 @@ const mongoose = require('mongoose');
 // @access  Private
 const getWalletBalance = async (req, res) => {
     try {
-        //const userId = req.user.userId
+        
         const userId = req.params.id;
-        console.log(userId)
         if (!userId) 
             return res.status(401).json({ message: "Access Deniedddd" });
         
-        const objectUserId = new mongoose.Types.ObjectId(userId);
-        //const { userId } = req.params
         const wallet = await Wallet.findOne({ userId: userId });
-        //const wallet = await Wallet.findOne({ userId: new mongoose.Types.ObjectId(req.user) });
-        console.log(wallet)
+        console.log("wallettt", wallet)
 
 
         if (!wallet) {
@@ -38,8 +34,7 @@ const getWalletBalance = async (req, res) => {
 // @access  Private
 const addFundsToWallet = async (req, res) => {
     try {
-        const { amount } = req.body;
-        const userId = req.user.id;
+        const { amount, userId } = req.body;
 
         if (!amount || typeof amount !== 'number' || amount <= 0) {
             return res.status(400).json({ message: 'Invalid amount' });
@@ -53,24 +48,16 @@ const addFundsToWallet = async (req, res) => {
 
         // Update wallet balance
         wallet.balance += amount;
+        //wallet.balance = wallet.balance + amount;
         await wallet.save();
 
-        // Create transaction record
-        const transaction = new Transaction({
+        const transaction = await Transaction.create({
             walletId: wallet._id,
-            type: 'ADD',
+            type: "ADD",
             amount,
-            transactionId: uuidv4(),
-            status: 'SUCCESS',
-        });
-
-        // await Transaction.create({
-        //     walletId: wallet._id,
-        //     type: "ADD",
-        //     amount,
-        //     status: "SUCCESS",
-        //     transactionId: uuidv4()
-        //   });
+            status: "SUCCESS",
+            transactionId: uuidv4()
+          });
 
         await transaction.save();
 
@@ -165,7 +152,7 @@ const getUserWallet = async (req, res) => {
 const transferFunds = async (req, res) => {
     try {
         const { amount, recipientEmail } = req.body;
-        const senderId = req.user.id;
+        const senderId = req.user.id; //req.user.userId
 
         if (!amount || typeof amount !== 'number' || amount <= 0) {
             return res.status(400).json({ message: 'Invalid amount' });
