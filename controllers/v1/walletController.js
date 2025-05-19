@@ -152,7 +152,10 @@ const getUserWallet = async (req, res) => {
 const transferFunds = async (req, res) => {
     try {
         const { amount, recipientEmail } = req.body;
-        const senderId = req.user.id; //req.user.userId
+        const senderId =  req.user; //req.user.userId 
+        console.log("senderId", senderId)
+        
+
 
         if (!amount || typeof amount !== 'number' || amount <= 0) {
             return res.status(400).json({ message: 'Invalid amount' });

@@ -7,7 +7,7 @@ const router = express.Router();
 
 
 router.post('/add-funds',  addFundsToWallet);
-router.post('/transfer',  transferFunds);
+router.post('/transfer', validateToken, transferFunds);
 router.get('/balance/:id', validateToken, getWalletBalance);
 
 
